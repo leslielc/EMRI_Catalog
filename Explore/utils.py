@@ -18,7 +18,7 @@ def inner_prod(sig1_f,sig2_f,N_t,delta_t,PSD):
     prefac = 4*delta_t / N_t
     sig2_f_conj = np.conjugate(sig2_f)
 
-    return prefac * np.real(sum((sig1_f * sig2_f_conj)/PSD))
+    return prefac * np.real(np.sum((sig1_f * sig2_f_conj)/PSD))
 
 
 
