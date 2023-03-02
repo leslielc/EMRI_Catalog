@@ -15,19 +15,21 @@ from few.waveform import Pn5AAKWaveform
 import emcee
 np.random.seed(1234)
 
+##======================Likelihood and Posterior (change this)=====================
+
 def llike(params):
     #likelihood: (s-h|s-h)
 
-    a_val = params[0]
-    M_val, mu_val, p0_val, e0_val, Y0_val, D_val = M, mu, p0, e0, Y0, dist
+    # p0_val = params[0]
+    # M_val, mu_val, a_val, e0_val, Y0_val, D_val = M, mu, a, e0, Y0, dist
 
-    # M_val = params[0]
-    # mu_val = params[1]
-    # a_val = params[2]            # This works fine! 
-    # p0_val = params[3]           
-    # e0_val = params[4]
-    # Y0_val = params[5]
-    # D_val = dist#params[6]
+    M_val = params[0]
+    mu_val = params[1]
+    a_val = a #params[2]            # This works fine! 
+    p0_val = p0 #params[3]           
+    e0_val = e0 #params[4]
+    Y0_val = Y0 #params[5]
+    D_val = dist#params[6]
     Phi_phi0_val = Phi_phi0#params[7]
     Phi_theta0_val = Phi_theta0#params[8]
     Phi_r0_val = Phi_r0#params[9]
@@ -115,7 +117,7 @@ noise_f = noise_f_real + 1j * noise_f_imag
 
 data_f = hp_fft + 0*noise_f   # define the data
 
-##===========================MCMC Settings============================
+##===========================MCMC Settings (change this)============================
 iterations = 5000 #10000  # The number of steps to run of each walker
 burnin = 0
 nwalkers = 10  #50 #members of the ensemble, like number of chains 森林中的小人
@@ -137,7 +139,7 @@ start_Phi_Phi0 = Phi_phi0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
 start_Phi_theta0 = Phi_theta0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
 start_Phi_r0 = Phi_r0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
 
-start = np.hstack((start_a))#np.hstack((start_M, start_mu, start_a, start_p0,start_e0, start_Y0))#, start_D, start_Phi_Phi0, start_Phi_theta0, start_Phi_r0))  #nwalker x n_parameter
+start = np.hstack((start_M, start_mu)) ##, start_a, start_p0,start_e0, start_Y0))#, start_D, start_Phi_Phi0, start_Phi_theta0, start_Phi_r0))  #nwalker x n_parameter #np.hstack((start_a))
 if np.size(start.shape) == 1:
     start = start.reshape(start.shape[-1], 1)
     ndim = 1
@@ -169,10 +171,10 @@ print("Should be zero if there is no noise", llike(start[0]))
 
 os.chdir('./mcmc_result')
 moves_stretch = emcee.moves.StretchMove(a=2)  #怎么取下一个点 a:小人的步长
-fp = "Only_a_10000.h5" 
+fp = "M_mu_10000.h5" 
 backend = emcee.backends.HDFBackend(fp)
 # start = backend.get_last_sample() #Continue
-backend.reset(nwalkers, ndim)
+backend.reset(nwalkers, ndim) #Start New
 
 
 # pool = get_context("fork").Pool(8)                      # Magical command to allow for multiprocessing on this nightmare M1 laptop
