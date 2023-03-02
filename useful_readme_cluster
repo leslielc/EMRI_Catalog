@@ -1,0 +1,5 @@
+# To activate job, activate:
+
+qsub -I -l walltime=00:10:00 -l select=1:ncpus=5:mem=10G:ngpus=1 -q qgpgpudev
+
+
