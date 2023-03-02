@@ -133,9 +133,9 @@ noise_f = noise_f_real + 1j * noise_f_imag
 data_f = hp_fft + 0*noise_f   # define the data
 
 ##===========================MCMC Settings (change this)============================
-iterations = 5000 #10000  # The number of steps to run of each walker
+iterations = 3000 #10000  # The number of steps to run of each walker
 burnin = 0
-nwalkers = 50  #50 #members of the ensemble, like number of chains 森林中的小人
+nwalkers = 50  #50 #members of the ensemble, like number of chains
 
 # n = 0
 d = 1 
@@ -166,11 +166,11 @@ else:
 print("Should be zero if there is no noise", llike(start[0]))
 
 
-os.chdir('mcmc_result')
-moves_stretch = emcee.moves.StretchMove(a=2)  #怎么取下一个点 a:小人的步长
+#os.chdir('/Explore/mcmc_result')
+moves_stretch = emcee.moves.StretchMove(a=2)  
 fp = "all_params_10000.h5" 
 backend = emcee.backends.HDFBackend(fp)
-# start = backend.get_last_sample() #Continue
+#start = backend.get_last_sample() #Continue
 backend.reset(nwalkers, ndim) #Start New
 
 
