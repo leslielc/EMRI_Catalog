@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as xp
 import matplotlib.pyplot as plt
 from scipy.signal import tukey
 import multiprocessing as mp
@@ -10,10 +10,11 @@ from mcmc_func import (lprior)
 from settings import (M, mu, a, p0, e0, iota0, Y0, 
                       dist, Phi_phi0, Phi_theta0, Phi_r0, qS, phiS, qK, phiK, 
                       mich, T, 
-                      sens_fn)
+                      sens_fn,
+                      xp, use_gpu)
 from few.waveform import Pn5AAKWaveform
 import emcee
-np.random.seed(1234)
+xp.random.seed(1234)
 
 ##======================Likelihood and Posterior (change this)=====================
 
@@ -45,7 +46,7 @@ def llike(params):
     h_p_prop*=window
     h_p_prop_pad = zero_pad(h_p_prop)
 
-    hp_fft_prop = np.fft.rfft(h_p_prop_pad)
+    hp_fft_prop = xp.fft.rfft(h_p_prop_pad)
 
     diff_f = (hp_fft - hp_fft_prop)
 
@@ -62,8 +63,6 @@ def lpost(params):
 ##==========================Waveform Settings========================
 delta_t = 50  # Sampling interval
 # delta_t = 10 # plotting
-
-use_gpu = False
 
 # keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)
 inspiral_kwargs = {
@@ -92,26 +91,26 @@ hp = waveform.real  # Extract polarisations
 hc = waveform.imag
 
 
-t = np.arange(0,len(hp)*delta_t,delta_t)
+t = xp.arange(0,len(hp)*delta_t,delta_t)
 
 window = tukey(len(hp),0.1)
 hp *= window
 
 hp_pad = zero_pad(hp)
 N_t = len(hp_pad)
-hp_fft = np.fft.rfft(hp_pad)
-freq = np.fft.rfftfreq(N_t,delta_t)
+hp_fft = xp.fft.rfft(hp_pad)
+freq = xp.fft.rfftfreq(N_t,delta_t)
 freq[0] = freq[1]   # To "retain" the zeroth frequency
-PSD = get_sensitivity(freq, sens_fn = sens_fn)
+PSD = get_sensitivity(freq, sens_fn = sens_fn, use_gpu=use_gpu)
 SNR2_TD = inner_prod(hp_fft,hp_fft,N_t,delta_t,PSD)
 
-print("SNR with no gaps", np.sqrt(SNR2_TD))
+print("SNR with no gaps", xp.sqrt(SNR2_TD))
 print("Final time",delta_t * len(hp)/60/60/24)
 
 ##=====================Noise Setting: Currently 0=====================
 variance_noise = N_t * PSD / (4*delta_t)
-noise_f_real = np.random.normal(0,np.sqrt(variance_noise))
-noise_f_imag = np.random.normal(0,np.sqrt(variance_noise))
+noise_f_real = xp.random.normal(0,xp.sqrt(variance_noise))
+noise_f_imag = xp.random.normal(0,xp.sqrt(variance_noise))
 
 noise_f = noise_f_real + 1j * noise_f_imag
 
@@ -127,20 +126,20 @@ d = 1
 
 #here we should be shifting by the *relative* error! 
 
-start_M = M*(1. + d * 1e-7 * np.random.randn(nwalkers,1))   # changed to 1e-6 careful of starting points! Before I started on secondaries... haha.
-start_mu = mu*(1. + d * 1e-7 * np.random.randn(nwalkers,1))
-start_a = a*(1. + d * 1e-7 * np.random.randn(nwalkers,1))
-start_p0 = p0*(1. + d * 1e-8 * np.random.randn(nwalkers, 1))
-start_e0 = e0*(1. + d * 1e-7 * np.random.randn(nwalkers, 1))
-start_Y0 = Y0*(1. + d * 1e-7 * np.random.randn(nwalkers, 1))
+start_M = M*(1. + d * 1e-7 * xp.random.randn(nwalkers,1))   # changed to 1e-6 careful of starting points! Before I started on secondaries... haha.
+start_mu = mu*(1. + d * 1e-7 * xp.random.randn(nwalkers,1))
+start_a = a*(1. + d * 1e-7 * xp.random.randn(nwalkers,1))
+start_p0 = p0*(1. + d * 1e-8 * xp.random.randn(nwalkers, 1))
+start_e0 = e0*(1. + d * 1e-7 * xp.random.randn(nwalkers, 1))
+start_Y0 = Y0*(1. + d * 1e-7 * xp.random.randn(nwalkers, 1))
 
-start_D = dist*(1 + d * 1e-6 * np.random.randn(nwalkers,1))
-start_Phi_Phi0 = Phi_phi0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
-start_Phi_theta0 = Phi_theta0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
-start_Phi_r0 = Phi_r0*(1. + d * 1e-6 * np.random.randn(nwalkers, 1))
+start_D = dist*(1 + d * 1e-6 * xp.random.randn(nwalkers,1))
+start_Phi_Phi0 = Phi_phi0*(1. + d * 1e-6 * xp.random.randn(nwalkers, 1))
+start_Phi_theta0 = Phi_theta0*(1. + d * 1e-6 * xp.random.randn(nwalkers, 1))
+start_Phi_r0 = Phi_r0*(1. + d * 1e-6 * xp.random.randn(nwalkers, 1))
 
-start = np.hstack((start_M, start_mu)) ##, start_a, start_p0,start_e0, start_Y0))#, start_D, start_Phi_Phi0, start_Phi_theta0, start_Phi_r0))  #nwalker x n_parameter #np.hstack((start_a))
-if np.size(start.shape) == 1:
+start = xp.hstack((start_M, start_mu)) ##, start_a, start_p0,start_e0, start_Y0))#, start_D, start_Phi_Phi0, start_Phi_theta0, start_Phi_r0))  #nwalker x n_parameter #xp.hstack((start_a))
+if xp.size(start.shape) == 1:
     start = start.reshape(start.shape[-1], 1)
     ndim = 1
 else:
@@ -152,9 +151,9 @@ print("Should be zero if there is no noise", llike(start[0]))
 
 
 # os.chdir('/Users/oburke/Documents/Presentations/Review_Bayeisan_GWs')
-# t = np.arange(0,len(hp)*delta_t,delta_t)/60/60/24
-# np.random.seed(1234)
-# noise_t = 5*1e-22 * np.random.normal(0,1,len(hp))
+# t = xp.arange(0,len(hp)*delta_t,delta_t)/60/60/24
+# xp.random.seed(1234)
+# noise_t = 5*1e-22 * xp.random.normal(0,1,len(hp))
 
 # plt.plot(t,noise_t,color = 'green', label = 'Noise')
 # plt.plot(t,hp, color = 'red', alpha = 0.5, label = 'EMRI signal')

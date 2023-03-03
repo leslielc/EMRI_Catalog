@@ -1,19 +1,17 @@
 import sys
 print(sys.version)
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import tukey
 from lisatools.sensitivity import get_sensitivity
 from utils import (zero_pad, inner_prod)
+from settings import xp, use_gpu
 
 from few.waveform import Pn5AAKWaveform
 
 ##======================Waveform Settings====================
 # Sampling interval
 delta_t = 10
-
-use_gpu = False # CHANGE ME TO "TRUE" PLEASE <--- GPU ACCELERATE.
 
 # keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)
 inspiral_kwargs = {
@@ -32,7 +30,7 @@ AAK_waveform_model = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=
 
 ####=======================True waveform==========================
 
-M = 1e6; mu = 10; a = 0.9; p0 = 10.0; e0 = 0.7; iota0 = 1; Y0 = np.cos(iota0); dist = 1
+M = 1e6; mu = 10; a = 0.9; p0 = 10.0; e0 = 0.7; iota0 = 1; Y0 = xp.cos(iota0); dist = 1
 Phi_phi0 = 2; Phi_theta0 = 3; Phi_r0 = 1.5
 qS = 0.5; phiS = 2; qK = 0.8; phiK = 1;  mich = False; T = 2
 
@@ -51,24 +49,28 @@ print(end-begin)
 hp = waveform.real  # Extract polarisations
 hc = waveform.imag
 
-window = tukey(len(hp),0)
-hp *= window
+# window = tukey(len(hp),0)
+# hp *= window
 hp_pad = zero_pad(hp)
 N_t = len(hp_pad)
-hp_fft = np.fft.rfft(hp_pad)
-freq = np.fft.rfftfreq(N_t,delta_t)
+hp_fft = xp.fft.rfft(hp_pad)
+freq = xp.fft.rfftfreq(N_t,delta_t)
 freq[0] = freq[1]   # To "retain" the zeroth frequency
 
 ###==========PLOTS===========
-t_plot = np.arange(0,len(hp)*delta_t,delta_t)
-plt.plot(t_plot/60/60/24,hp)
-plt.show()
+# t_plot = xp.arange(0,len(hp)*delta_t,delta_t)
+# plt.plot(t_plot/60/60/24,hp)
+# plt.show()
 # breakpoint()
 
-PSD = get_sensitivity(freq, sens_fn = 'cornish_lisa_psd')
+print(time.time()-begin)
+PSD = get_sensitivity(freq, sens_fn = 'cornish_lisa_psd',use_gpu=use_gpu)
+print(time.time()-begin)
+
+# breakpoint()
 SNR2_TD = inner_prod(hp_fft,hp_fft,N_t,delta_t,PSD)
 
-print("SNR with no gaps", np.sqrt(SNR2_TD))
+print("SNR with no gaps", xp.sqrt(SNR2_TD))
 print("Final time",delta_t * len(hp)/60/60/24)
-
+print(time.time()-begin)
 
